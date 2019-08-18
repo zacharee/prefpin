@@ -16,7 +16,7 @@ android {
 
 dependencies {
   api project(':prefpin-annotation')
-  testImplementation "junit:junit:$rootProject.junitVersion"
-}
 
-apply from: rootProject.file('release-bintray.gradle')
+  api 'androidx.preference:preference:1.0.0'
+  testImplementation "junit:junit:4.12"
+}

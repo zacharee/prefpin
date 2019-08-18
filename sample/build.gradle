@@ -22,9 +22,9 @@ android {
 }
 
 dependencies {
-  implementation "com.android.support:appcompat-v7:$rootProject.supportVersion"
-//  implementation project(":prefpin")
-//  annotationProcessor project(":prefpin-processor")
-  implementation "com.emo-pass:prefpin:$rootProject.releaseVersion"
-  annotationProcessor "com.emo-pass:prefpin-processor:$rootProject.releaseVersion"
+  implementation "androidx.appcompat:appcompat:1.0.2"
+  implementation project(":prefpin")
+  annotationProcessor project(":prefpin-processor")
+//  implementation "com.emo-pass:prefpin:$rootProject.releaseVersion"
+//  annotationProcessor "com.emo-pass:prefpin-processor:$rootProject.releaseVersion"
 }
