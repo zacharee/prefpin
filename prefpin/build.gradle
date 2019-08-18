@@ -1,22 +1,25 @@
 apply plugin: 'com.android.library'
+apply plugin: 'com.github.dcendents.android-maven'
+
+group='com.github.zacharee'
 
 android {
-  compileSdkVersion rootProject.compileSdkVersion
+    compileSdkVersion rootProject.compileSdkVersion
 
-  defaultConfig {
-    minSdkVersion rootProject.minSdkVersion
+    defaultConfig {
+        minSdkVersion rootProject.minSdkVersion
 
-    javaCompileOptions {
-      annotationProcessorOptions {
-        includeCompileClasspath = true
-      }
+        javaCompileOptions {
+            annotationProcessorOptions {
+                includeCompileClasspath = true
+            }
+        }
     }
-  }
 }
 
 dependencies {
-  api project(':prefpin-annotation')
+    api project(':prefpin-annotation')
 
-  api 'androidx.preference:preference:1.0.0'
-  testImplementation "junit:junit:4.12"
+    api 'androidx.preference:preference:1.0.0'
+    testImplementation "junit:junit:4.12"
 }
