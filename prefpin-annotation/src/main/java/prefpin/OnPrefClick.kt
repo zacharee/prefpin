@@ -1,6 +1,7 @@
 package prefpin
 
 import androidx.annotation.StringRes
+import kotlin.reflect.KClass
 
 /**
  * Binds a method to the OnPreferenceClick handler of a preference for the specific key.
@@ -8,5 +9,6 @@ import androidx.annotation.StringRes
 @Retention(AnnotationRetention.BINARY)
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER)
 annotation class OnPrefClick(
-        @StringRes vararg val value: Int
+        @StringRes vararg val value: Int,
+        val clazz: String = "androidx.preference.Preference"
 )

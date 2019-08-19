@@ -11,8 +11,7 @@ import androidx.annotation.StringRes
  */
 @Retention
 @Target(AnnotationTarget.FIELD)
-annotation class BindPref(
-        /**
+annotation class BindPref(/**
          * Preference's key which is stored as a string resource.
          */
         @StringRes val value: Int

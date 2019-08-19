@@ -171,6 +171,7 @@ class PrefPinProcessor : AbstractProcessor() {
         val onPrefClick = element.getAnnotation(OnPrefClick::class.java)
         if (onPrefClick != null) {
             val resourceIds = onPrefClick.value
+            val clazz = onPrefClick.clazz
 
             for (resourceId in resourceIds) {
                 constructorBuilder.addStatement("target.findPreference(target.getString(\$L))"
@@ -179,13 +180,14 @@ class PrefPinProcessor : AbstractProcessor() {
                         + "\t\ttarget.\$L(preference);\n"
                         + "\t\treturn true;\n"
                         + "\t}\n"
-                        + "})", resourceId, CLICK_LISTENER, PREFERENCE, element.simpleName)
+                        + "})", resourceId, CLICK_LISTENER, ClassName.get(Class.forName(clazz)), element.simpleName)
             }
         }
 
         val onPrefClickString = element.getAnnotation(OnPrefClickString::class.java)
         if (onPrefClickString != null) {
             val keys = onPrefClickString.value
+            val clazz = onPrefClickString.clazz
 
             for (key in keys) {
                 constructorBuilder.addStatement(
@@ -196,7 +198,7 @@ class PrefPinProcessor : AbstractProcessor() {
                                 "\t\treturn true;\n" +
                                 "\t}\n" +
                                 "})",
-                        key, CLICK_LISTENER, PREFERENCE, element.simpleName
+                        key, CLICK_LISTENER, ClassName.get(Class.forName(clazz)), element.simpleName
                 )
             }
         }
@@ -206,6 +208,7 @@ class PrefPinProcessor : AbstractProcessor() {
         val onPrefChange = element.getAnnotation(OnPrefChange::class.java)
         if (onPrefChange != null) {
             val resourceIds = onPrefChange.value
+            val clazz = onPrefChange.clazz
 
             for (resourceId in resourceIds) {
                 constructorBuilder.addStatement("target.findPreference(target.getString(\$L))"
@@ -214,13 +217,14 @@ class PrefPinProcessor : AbstractProcessor() {
                         + "\t\ttarget.\$L(preference, newValue);\n"
                         + "\t\treturn true;\n"
                         + "\t}\n"
-                        + "})", resourceId, CHANGE_LISTENER, PREFERENCE, element.simpleName)
+                        + "})", resourceId, CHANGE_LISTENER, ClassName.get(Class.forName(clazz)), element.simpleName)
             }
         }
 
         val onPrefChangeString = element.getAnnotation(OnPrefChangeString::class.java)
         if (onPrefChangeString != null) {
             val keys = onPrefChangeString.value
+            val clazz = onPrefChangeString.clazz
 
             for (key in keys) {
                 constructorBuilder.addStatement("target.findPreference(\$L)"
@@ -229,7 +233,7 @@ class PrefPinProcessor : AbstractProcessor() {
                         + "\t\ttarget.\$L(preference, newValue);\n"
                         + "\t\treturn true;\n"
                         + "\t}\n"
-                        + "})", key, CHANGE_LISTENER, PREFERENCE, element.simpleName)
+                        + "})", key, CHANGE_LISTENER, ClassName.get(Class.forName(clazz)), element.simpleName)
             }
         }
     }
