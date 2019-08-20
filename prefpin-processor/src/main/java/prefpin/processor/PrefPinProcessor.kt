@@ -165,7 +165,7 @@ class PrefPinProcessor : AbstractProcessor() {
             val key = bindPrefString.value
 
             constructorBuilder.addStatement(
-                    "target.%L = target.findPreference<%T>(%L) as %T",
+                    "target.%L = target.findPreference<%T>(\"%L\") as %T",
                     element.simpleName,
                     element.asType(),
                     key,
@@ -198,7 +198,7 @@ class PrefPinProcessor : AbstractProcessor() {
 
             for (key in keys) {
                 constructorBuilder.addStatement(
-                        "target.findPreference<%T>(%L)" +
+                        "target.findPreference<%T>(\"%L\")" +
                         "!!.setOnPreferenceClickListener(object : %T {\n" +
                                 "override fun onPreferenceClick(preference: %T): Boolean {\n" +
                                 "\t\ttarget.%L(preference)\n" +
@@ -234,7 +234,7 @@ class PrefPinProcessor : AbstractProcessor() {
 
             for (key in keys) {
                 constructorBuilder.addStatement(
-                        "target.findPreference<%T>(%L)" +
+                        "target.findPreference<%T>(\"%L\")" +
                         "!!.setOnPreferenceChangeListener(object : %T {\n" +
                                 "override fun onPreferenceChange(preference: %T, newValue: Any): Boolean {\n" +
                                 "\t\ttarget.%L(preference, newValue)\n" +
