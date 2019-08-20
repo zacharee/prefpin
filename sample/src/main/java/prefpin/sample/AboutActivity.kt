@@ -1,12 +1,12 @@
 package prefpin.sample
 
 import android.os.Bundle
-import android.preference.PreferenceActivity
+import androidx.appcompat.app.AppCompatActivity
 
-class AboutActivity : PreferenceActivity() {
+class AboutActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        fragmentManager.beginTransaction()
+        supportFragmentManager.beginTransaction()
                 .replace(android.R.id.content, AboutFragment())
                 .commit()
     }

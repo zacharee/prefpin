@@ -1,14 +1,14 @@
 package prefpin.sample
 
 import android.annotation.SuppressLint
-import android.preference.PreferenceActivity
 import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
 
 @SuppressLint("ExportedPreferenceActivity")
-class SettingsActivity : PreferenceActivity() {
+class SettingsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        fragmentManager.beginTransaction()
+        supportFragmentManager.beginTransaction()
                 .replace(android.R.id.content, SettingsFragment())
                 .commit()
     }

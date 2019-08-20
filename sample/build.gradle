@@ -1,4 +1,6 @@
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-kapt'
 
 android {
   compileSdkVersion rootProject.compileSdkVersion
@@ -19,12 +21,28 @@ android {
       proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
     }
   }
+
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
+  }
+
+  sourceSets {
+    main {
+      java {
+        srcDir "${buildDir.absolutePath}/generated/source/kaptKotlin/"
+      }
+    }
+  }
 }
 
 dependencies {
   implementation "androidx.appcompat:appcompat:1.0.2"
+  implementation 'androidx.preference:preference:1.0.0'
+  implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+
   implementation project(":prefpin")
-  annotationProcessor project(":prefpin-processor")
+  kapt project(":prefpin-processor")
 //  implementation "com.emo-pass:prefpin:$rootProject.releaseVersion"
 //  annotationProcessor "com.emo-pass:prefpin-processor:$rootProject.releaseVersion"
 }

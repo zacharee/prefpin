@@ -9,6 +9,5 @@ import kotlin.reflect.KClass
 @Retention(AnnotationRetention.BINARY)
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER)
 annotation class OnPrefClick(
-        @StringRes vararg val value: Int,
-        val clazz: String = "androidx.preference.Preference"
+        @StringRes vararg val value: Int
 )

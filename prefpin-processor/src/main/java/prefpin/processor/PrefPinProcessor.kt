@@ -1,10 +1,7 @@
 package prefpin.processor
 
 import com.google.auto.service.AutoService
-import com.squareup.javapoet.ClassName
-import com.squareup.javapoet.JavaFile
-import com.squareup.javapoet.MethodSpec
-import com.squareup.javapoet.TypeSpec
+import com.squareup.kotlinpoet.*
 
 import java.io.IOException
 import java.util.LinkedHashMap
@@ -71,11 +68,11 @@ class PrefPinProcessor : AbstractProcessor() {
     private fun parsePreferenceBinding(roundEnv: RoundEnvironment,
                                        bindingMap: MutableMap<TypeElement, LinkedHashSet<Element>>, annotation: Class<out Annotation>) {
         for (element in roundEnv.getElementsAnnotatedWith(annotation)) {
-            if (element.modifiers.contains(Modifier.PRIVATE)) {
-                processingEnv.messager
-                        .printMessage(Diagnostic.Kind.ERROR,
-                                "Binding annotation can not applied to private fields or methods.", element)
-            }
+//            if (element.modifiers.contains(Modifier.PRIVATE)) {
+//                processingEnv.messager
+//                        .printMessage(Diagnostic.Kind.ERROR,
+//                                "Binding annotation can not applied to private fields or methods.", element)
+//            }
 
             if (annotation == BindPref::class.java || annotation == BindPrefString::class.java) {
                 checkPreferenceAnnotation(element)
@@ -97,13 +94,14 @@ class PrefPinProcessor : AbstractProcessor() {
      * message for incorrect one.
      */
     private fun checkPreferenceAnnotation(element: Element): Boolean {
-        if (isSubtypeOfType(element.asType(), "android.preference.Preference")) {
-            return true
+        return if (isSubtypeOfType(element.asType(), "androidx.preference.Preference")) {
+            true
         } else {
             processingEnv.messager
                     .printMessage(Diagnostic.Kind.ERROR,
                             "@PrefPin must be applied to Preference or its subclass fields", element)
-            return false
+            println("Bad Annotation")
+            false
         }
     }
 
@@ -119,23 +117,25 @@ class PrefPinProcessor : AbstractProcessor() {
         val bindingClassName = targetClassName + BINDING_CLASS_NAME_POSTFIX
         val bindingSimpleClassName = bindingClassName.substring(lastDot + 1)
 
-        val targetClass = ClassName.get(packageName, targetSimpleClassName)
+        val targetClass = ClassName(packageName!!, targetSimpleClassName)
 
         val binding = TypeSpec.classBuilder(bindingSimpleClassName)
-                .addModifiers(Modifier.PUBLIC)
-                .addMethod(buildConstructor(targetClass, annotationFields))
+                .addModifiers(KModifier.PUBLIC)
+                .addFunction(buildConstructor(targetClass, annotationFields))
                 .build()
 
-        val javaFile = JavaFile.builder(packageName!!, binding).build()
+        val file = FileSpec.builder(packageName, bindingSimpleClassName)
+                .addType(binding)
+                .build()
 
-        javaFile.writeTo(processingEnv.filer)
+        file.writeTo(processingEnv.filer)
     }
 
-    private fun buildConstructor(targetClass: ClassName, annotationFields: Set<Element>): MethodSpec {
-        val constructorBuilder = MethodSpec.constructorBuilder()
+    private fun buildConstructor(targetClass: ClassName, annotationFields: Set<Element>): FunSpec {
+        val constructorBuilder = FunSpec.constructorBuilder()
                 .addAnnotation(UI_THREAD)
-                .addModifiers(Modifier.PUBLIC)
-                .addParameter(targetClass, "target", Modifier.FINAL)
+                .addModifiers(KModifier.PUBLIC)
+                .addParameter("target", targetClass)
 
         for (element in annotationFields) {
             buildFieldBinding(constructorBuilder, element)
@@ -146,14 +146,18 @@ class PrefPinProcessor : AbstractProcessor() {
         return constructorBuilder.build()
     }
 
-    private fun buildFieldBinding(constructorBuilder: MethodSpec.Builder, element: Element) {
+    private fun buildFieldBinding(constructorBuilder: FunSpec.Builder, element: Element) {
         val bindPref = element.getAnnotation(BindPref::class.java)
         if (bindPref != null) {
             val resourceId = bindPref.value
 
             constructorBuilder.addStatement(
-                    "target.\$L = (\$T) target.findPreference(target.getString(\$L))", element.simpleName,
-                    element.asType(), resourceId)
+                    "target.%L = target.findPreference<%T>(target.getString(%L)) as %T",
+                    element.simpleName,
+                    element.asType(),
+                    resourceId,
+                    element.asType()
+            )
         }
 
         val bindPrefString = element.getAnnotation(BindPrefString::class.java)
@@ -161,79 +165,83 @@ class PrefPinProcessor : AbstractProcessor() {
             val key = bindPrefString.value
 
             constructorBuilder.addStatement(
-                    "target.\$L = (\$T} target.findPreference(\$L)", element.simpleName,
-                    element.asType(), key
+                    "target.%L = target.findPreference<%T>(%L) as %T",
+                    element.simpleName,
+                    element.asType(),
+                    key,
+                    element.asType()
             )
         }
     }
 
-    private fun buildOnClickBinding(constructorBuilder: MethodSpec.Builder, element: Element) {
+    private fun buildOnClickBinding(constructorBuilder: FunSpec.Builder, element: Element) {
         val onPrefClick = element.getAnnotation(OnPrefClick::class.java)
         if (onPrefClick != null) {
             val resourceIds = onPrefClick.value
-            val clazz = onPrefClick.clazz
 
             for (resourceId in resourceIds) {
-                constructorBuilder.addStatement("target.findPreference(target.getString(\$L))"
-                        + ".setOnPreferenceClickListener(new \$T(){\n"
-                        + "@Override public boolean onPreferenceClick(\$T preference) {\n"
-                        + "\t\ttarget.\$L(preference);\n"
-                        + "\t\treturn true;\n"
-                        + "\t}\n"
-                        + "})", resourceId, CLICK_LISTENER, ClassName.get(Class.forName(clazz)), element.simpleName)
+                constructorBuilder.addStatement(
+                        "target.findPreference<%T>(target.getString(%L))" +
+                        "!!.setOnPreferenceClickListener(object : %T {\n" +
+                                "override fun onPreferenceClick(preference: %T): Boolean {\n" +
+                                        "\t\ttarget.%L(preference)\n" +
+                                        "\t\treturn true\n" +
+                                "\t}\n" +
+                        "})", PREFERENCE, resourceId, CLICK_LISTENER, PREFERENCE, element.simpleName
+                )
             }
         }
 
         val onPrefClickString = element.getAnnotation(OnPrefClickString::class.java)
         if (onPrefClickString != null) {
             val keys = onPrefClickString.value
-            val clazz = onPrefClickString.clazz
 
             for (key in keys) {
                 constructorBuilder.addStatement(
-                        "target.findPreference(\$L)" +
-                                ".setOnPreferenceClickListener(new \$T() {\n" +
-                                "@Override public boolean onPreferenceClick(\$T preference) {\n" +
-                                "\t\ttarget.\$L(preference);\n" +
-                                "\t\treturn true;\n" +
+                        "target.findPreference<%T>(%L)" +
+                        "!!.setOnPreferenceClickListener(object : %T {\n" +
+                                "override fun onPreferenceClick(preference: %T): Boolean {\n" +
+                                "\t\ttarget.%L(preference)\n" +
+                                "\t\treturn true\n" +
                                 "\t}\n" +
-                                "})",
-                        key, CLICK_LISTENER, ClassName.get(Class.forName(clazz)), element.simpleName
+                                "})", PREFERENCE, key, CLICK_LISTENER, PREFERENCE, element.simpleName
                 )
             }
         }
     }
 
-    private fun buildOnChangeBinding(constructorBuilder: MethodSpec.Builder, element: Element) {
+    private fun buildOnChangeBinding(constructorBuilder: FunSpec.Builder, element: Element) {
         val onPrefChange = element.getAnnotation(OnPrefChange::class.java)
         if (onPrefChange != null) {
             val resourceIds = onPrefChange.value
-            val clazz = onPrefChange.clazz
 
             for (resourceId in resourceIds) {
-                constructorBuilder.addStatement("target.findPreference(target.getString(\$L))"
-                        + ".setOnPreferenceChangeListener(new \$T(){\n"
-                        + "@Override public boolean onPreferenceChange(\$T preference, Object newValue) {\n"
-                        + "\t\ttarget.\$L(preference, newValue);\n"
-                        + "\t\treturn true;\n"
-                        + "\t}\n"
-                        + "})", resourceId, CHANGE_LISTENER, ClassName.get(Class.forName(clazz)), element.simpleName)
+                constructorBuilder.addStatement(
+                        "target.findPreference<%T>(target.getString(%L))" +
+                        "!!.setOnPreferenceChangeListener(object : %T {\n" +
+                                "override fun onPreferenceChange(preference: %T, newValue: Any): Boolean {\n" +
+                                        "\t\ttarget.%L(preference, newValue)\n" +
+                                        "\t\treturn true\n" +
+                                "\t}\n" +
+                        "})", PREFERENCE, resourceId, CHANGE_LISTENER, PREFERENCE, element.simpleName
+                )
             }
         }
 
         val onPrefChangeString = element.getAnnotation(OnPrefChangeString::class.java)
         if (onPrefChangeString != null) {
             val keys = onPrefChangeString.value
-            val clazz = onPrefChangeString.clazz
 
             for (key in keys) {
-                constructorBuilder.addStatement("target.findPreference(\$L)"
-                        + ".setOnPreferenceChangeListener(new \$T(){\n"
-                        + "@Override public boolean onPreferenceChange(\$T preference, Object newValue) {\n"
-                        + "\t\ttarget.\$L(preference, newValue);\n"
-                        + "\t\treturn true;\n"
-                        + "\t}\n"
-                        + "})", key, CHANGE_LISTENER, ClassName.get(Class.forName(clazz)), element.simpleName)
+                constructorBuilder.addStatement(
+                        "target.findPreference<%T>(%L)" +
+                        "!!.setOnPreferenceChangeListener(object : %T {\n" +
+                                "override fun onPreferenceChange(preference: %T, newValue: Any): Boolean {\n" +
+                                "\t\ttarget.%L(preference, newValue)\n" +
+                                "\t\treturn true\n" +
+                                "\t}\n" +
+                                "})", PREFERENCE, key, CHANGE_LISTENER, PREFERENCE, element.simpleName
+                )
             }
         }
     }
@@ -276,10 +284,10 @@ class PrefPinProcessor : AbstractProcessor() {
 
     companion object {
         const val BINDING_CLASS_NAME_POSTFIX = "_PrefBinding"
-        private val PREFERENCE = ClassName.get("android.preference", "Preference")
-        private val CLICK_LISTENER = ClassName.get("android.preference.Preference", "OnPreferenceClickListener")
-        private val CHANGE_LISTENER = ClassName.get("android.preference.Preference", "OnPreferenceChangeListener")
-        private val UI_THREAD = ClassName.get("android.support.annotation", "UiThread")
+        private val PREFERENCE = ClassName("androidx.preference", "Preference")
+        private val CLICK_LISTENER = ClassName("androidx.preference.Preference", "OnPreferenceClickListener")
+        private val CHANGE_LISTENER = ClassName("androidx.preference.Preference", "OnPreferenceChangeListener")
+        private val UI_THREAD = ClassName("androidx.annotation", "UiThread")
 
         private fun isTypeEqual(typeMirror: TypeMirror, otherType: String): Boolean {
             return otherType == typeMirror.toString()

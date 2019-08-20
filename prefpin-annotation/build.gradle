@@ -9,5 +9,5 @@ targetCompatibility = JavaVersion.VERSION_1_8
 
 dependencies {
   api 'androidx.annotation:annotation:1.1.0'
-  implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+  implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
 }

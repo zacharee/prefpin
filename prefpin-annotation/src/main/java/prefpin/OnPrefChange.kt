@@ -8,6 +8,5 @@ import androidx.annotation.StringRes
 @Retention
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER)
 annotation class OnPrefChange(
-        @StringRes vararg val value: Int,
-        val clazz: String = "androidx.preference.Preference"
+        @StringRes vararg val value: Int
 )

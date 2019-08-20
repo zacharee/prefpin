@@ -6,6 +6,5 @@ package prefpin
 @Retention
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER)
 annotation class OnPrefChangeString(
-        vararg val value: String,
-        val clazz: String = "androidx.preference.Preference"
+        vararg val value: String
 )
